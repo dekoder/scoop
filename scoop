@@ -1,0 +1,31 @@
+#!/usr/bin/python3
+import sys
+from source.target import *
+from source import log
+from io import BytesIO
+import zipfile
+
+try:
+    target_path = sys.argv[1]
+except:
+    target_path = '/'
+try:
+    output_zip = sys.argv[2]
+except:
+    log.err('Usage: %s <target> <output_zip_file>' % sys.argv[0])
+    sys.exit(1)
+
+# create target connection, dump interesting files
+t = Target.create_target(sys.argv[1])
+result = t.dump()
+# craft zip
+memzip = BytesIO()
+with zipfile.ZipFile(memzip, mode='a', compression=zipfile.ZIP_DEFLATED) as zf:
+    for k, v in result.items():
+        if not v:
+            continue
+        zf.writestr(k, v)
+# save the zip
+with open(output_zip, 'wb') as f:
+    f.write(memzip.getvalue())
+log.ok('Files saved in %s.' % output_zip)
